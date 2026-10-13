@@ -1,45 +1,22 @@
 ## Olist D2C AI Analytics Assistant
-import os
+import base64
 import json
 import tempfile
+import os
 import streamlit as st
-from google.oauth2 import service_account
 from langchain_community.utilities.sql_database import SQLDatabase
-from langchain_community.agent_toolkits import create_sql_agent
-from langchain_groq import ChatGroq
-from sqlalchemy import create_engine
 
-# --- Database & Credentials Connection Setup ---
 @st.cache_resource
 def get_db_connection():
     try:
-        # Check if running on Streamlit Cloud with secrets configured
-        if "gcp_service_account" in st.secrets:
-            # Load credentials dictionary directly from st.secrets
-            creds_dict = dict(st.secrets["gcp_service_account"])
-            
-            # Clean up private key newline escape sequences safely
-            if "private_key" in creds_dict:
-                creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
-            
-            # Authenticate directly via Google OAuth client
-            credentials = service_account.Credentials.from_service_account_info(creds_dict)
-            
-            # Create SQLAlchemy engine directly using the authenticated credentials object
-            db_uri = "bigquery://olist-d2c-analytics/olist_warehouse"
-            
-            # Use SQLAlchemy create_engine with credentials parameter if needed, 
-            # or pass credentials directly to BigQuery connection string dialect
-            from sqlalchemy.engine import URL
-            
-            # Alternatively, initialize SQLDatabase using an explicit SQLAlchemy engine with credentials
-            from google.cloud import bigquery
-            client = bigquery.Client(credentials=credentials, project=creds_dict.get("project_id"))
-            
-            # Use direct BigQuery SQLAlchemy connector
-            engine = create_engine("bigquery://olist-d2c-analytics", credentials_info=creds_dict)
-            db = SQLDatabase(engine)
-            return db
+        # Load from Base64 secret on Streamlit Cloud
+        if "GCP_CREDENTIALS_BASE64" in st.secrets:
+            json_bytes = base64.b64decode(st.secrets["GCP_CREDENTIALS_BASE64"])
+            with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=".json") as temp:
+                temp.write(json_bytes)
+                temp_path = temp.name
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_path
+            return SQLDatabase.from_uri("bigquery://olist-d2c-analytics/olist_warehouse")
 
     except Exception as e:
         st.error(f"Cloud DB Connection Error: {e}")
