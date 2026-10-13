@@ -7,7 +7,9 @@ import streamlit as st
 from langchain_groq import ChatGroq
 from langchain_community.utilities.sql_database import SQLDatabase
 from google.cloud import bigquery
-
+from langchain_groq import ChatGroq
+from langchain_community.utilities.sql_database import SQLDatabase
+from langchain_community.agent_toolkits import create_sql_agent
 
 @st.cache_resource
 def get_db_connection():
