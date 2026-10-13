@@ -13,18 +13,23 @@ def get_db_connection():
     try:
         if "gcp_service_account" in st.secrets:
             service_account_info = dict(st.secrets["gcp_service_account"])
+            
+            # Ensure private key newlines are correctly formatted if passed as a single-line or multi-line string
+            if "private_key" in service_account_info:
+                service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
+
             with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as temp:
                 json.dump(service_account_info, temp)
                 temp_path = temp.name
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_path
-    except Exception:
-        local_creds = os.path.join(os.path.dirname(os.path.dirname(__file__)), "credentials.json")
+    except Exception as e:
+        # Fallback for local development
+        local_creds = r"D:\Data Analytics\Chat D2C\Chatbot\olist-ai-assistant\credentials.json"
         if os.path.exists(local_creds):
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = local_creds
 
     db_uri = "bigquery://olist-d2c-analytics/olist_warehouse"
     return SQLDatabase.from_uri(db_uri)
-
 # --- Streamlit Page Configuration ---
 st.set_page_config(
     page_title="Olist D2C AI Analytics Assistant",
