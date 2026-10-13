@@ -3,33 +3,57 @@ import os
 import json
 import tempfile
 import streamlit as st
+from google.oauth2 import service_account
 from langchain_community.utilities.sql_database import SQLDatabase
 from langchain_community.agent_toolkits import create_sql_agent
 from langchain_groq import ChatGroq
+from sqlalchemy import create_engine
 
 # --- Database & Credentials Connection Setup ---
 @st.cache_resource
 def get_db_connection():
     try:
+        # Check if running on Streamlit Cloud with secrets configured
         if "gcp_service_account" in st.secrets:
-            service_account_info = dict(st.secrets["gcp_service_account"])
+            # Load credentials dictionary directly from st.secrets
+            creds_dict = dict(st.secrets["gcp_service_account"])
             
-            # Ensure private key newlines are correctly formatted if passed as a single-line or multi-line string
-            if "private_key" in service_account_info:
-                service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
+            # Clean up private key newline escape sequences safely
+            if "private_key" in creds_dict:
+                creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+            
+            # Authenticate directly via Google OAuth client
+            credentials = service_account.Credentials.from_service_account_info(creds_dict)
+            
+            # Create SQLAlchemy engine directly using the authenticated credentials object
+            db_uri = "bigquery://olist-d2c-analytics/olist_warehouse"
+            
+            # Use SQLAlchemy create_engine with credentials parameter if needed, 
+            # or pass credentials directly to BigQuery connection string dialect
+            from sqlalchemy.engine import URL
+            
+            # Alternatively, initialize SQLDatabase using an explicit SQLAlchemy engine with credentials
+            from google.cloud import bigquery
+            client = bigquery.Client(credentials=credentials, project=creds_dict.get("project_id"))
+            
+            # Use direct BigQuery SQLAlchemy connector
+            engine = create_engine("bigquery://olist-d2c-analytics", credentials_info=creds_dict)
+            db = SQLDatabase(engine)
+            return db
 
-            with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as temp:
-                json.dump(service_account_info, temp)
-                temp_path = temp.name
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_path
     except Exception as e:
-        # Fallback for local development
+        st.error(f"Cloud DB Connection Error: {e}")
+
+    # Fallback for local execution using local credentials.json file
+    try:
         local_creds = r"D:\Data Analytics\Chat D2C\Chatbot\olist-ai-assistant\credentials.json"
         if os.path.exists(local_creds):
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = local_creds
+            return SQLDatabase.from_uri("bigquery://olist-d2c-analytics/olist_warehouse")
+    except Exception as local_err:
+        st.error(f"Local DB Connection Error: {local_err}")
 
-    db_uri = "bigquery://olist-d2c-analytics/olist_warehouse"
-    return SQLDatabase.from_uri(db_uri)
+    return None
 # --- Streamlit Page Configuration ---
 st.set_page_config(
     page_title="Olist D2C AI Analytics Assistant",
