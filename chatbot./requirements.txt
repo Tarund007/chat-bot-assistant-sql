@@ -1,12 +1,10 @@
 streamlit
 langchain
 langchain-community
-langchain-openai
-google-cloud-bigquery
-db-dtypes
-sqlalchemy-bigquery
-openai
-python-dotenv
-langchain-google-genai
 langchain-groq
+google-cloud-bigquery
+sqlalchemy-bigquery
+db-dtypes
 google-auth
+python-dotenv
+websockets
