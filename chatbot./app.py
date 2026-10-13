@@ -143,7 +143,9 @@ else:
         llm = ChatGroq(
             model="qwen/qwen3.8-27b", 
             groq_api_key=groq_api_key, 
-            temperature=0
+            temperature=0.1,
+            max_tokens=800
+            
         )
         
         agent_executor = create_sql_agent(
