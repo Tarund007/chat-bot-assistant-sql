@@ -86,7 +86,7 @@ with st.sidebar:
             line-height: 1.5;
         ">
             <strong style="color: #ffffff; font-size: 14px;">⚡ Groq Free Tier Guidelines:</strong><br><br>
-            <b style="color: #58a6ff;">Use the provided Groq API key: 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</b><br>
+            <b style="color: #58a6ff;">Use the Groq API key</b><br>
             Enter a valid key above. Do not share it with others.<br><br>
             • <b>Rate Limits:</b> Subject to ~30 requests/min and token caps.<br>
             • <b>Reset / Refresh:</b> If you encounter a rate limit error, simply wait 1 minute or re-enter/refresh your key!
