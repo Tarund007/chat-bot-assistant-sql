@@ -1,10 +1,13 @@
 ## Olist D2C AI Analytics Assistant
 import base64
 import json
-import tempfile
 import os
+import tempfile
 import streamlit as st
+from langchain_groq import ChatGroq
 from langchain_community.utilities.sql_database import SQLDatabase
+from google.cloud import bigquery
+
 
 @st.cache_resource
 def get_db_connection():
